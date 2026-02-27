@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { sendSprintStartedEmail } from '@/lib/email';
 
 // GET — list sprints for a project
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }) {
@@ -131,6 +132,54 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ slug: 
         workspaceId: workspace.id,
       },
     });
+
+    // Notify workspace members when sprint starts
+    if (data.status === 'ACTIVE') {
+      const workspaceMembers = await prisma.workspaceMember.findMany({
+        where: { workspaceId: workspace.id },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              emailNotifications: true,
+              notifySprintStart: true,
+            },
+          },
+        },
+      });
+
+      const sprintUrl = `/w/${slug}/sprints`;
+      const projectName = sprint.project.name;
+
+      for (const member of workspaceMembers) {
+        if (member.user.notifySprintStart) {
+          await prisma.notification.create({
+            data: {
+              type: 'sprint_started',
+              title: `Sprint started: ${sprint.name}`,
+              message: `Sprint "${sprint.name}" has started in project ${projectName}.`,
+              link: sprintUrl,
+              userId: member.user.id,
+              workspaceId: workspace.id,
+            },
+          });
+        }
+
+        if (
+          member.user.emailNotifications &&
+          member.user.notifySprintStart &&
+          member.user.email
+        ) {
+          await sendSprintStartedEmail(
+            member.user.email,
+            sprint.name,
+            projectName,
+            `${process.env.NEXT_PUBLIC_APP_URL || ''}${sprintUrl}`
+          );
+        }
+      }
+    }
   }
 
   return NextResponse.json(sprint);

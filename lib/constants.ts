@@ -33,6 +33,18 @@ export const PRIORITY_CONFIG = {
   NONE: { label: 'None', color: '#6b7280', icon: '⚪' },
 } as const;
 
+// Accent color themes
+export const ACCENT_COLORS = {
+  indigo: { label: 'Indigo', hue: 264, preview: '#6366f1' },
+  blue:   { label: 'Blue',   hue: 250, preview: '#3b82f6' },
+  green:  { label: 'Green',  hue: 155, preview: '#10b981' },
+  purple: { label: 'Purple', hue: 300, preview: '#a855f7' },
+  orange: { label: 'Orange', hue: 55,  preview: '#f97316' },
+  red:    { label: 'Red',    hue: 25,  preview: '#ef4444' },
+} as const;
+
+export type AccentColor = keyof typeof ACCENT_COLORS;
+
 // Default labels
 export const DEFAULT_LABELS = [
   { name: 'Bug', color: '#ef4444' },

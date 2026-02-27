@@ -15,11 +15,16 @@ model User {
   emailVerified DateTime?
   password      String?
   image         String?
-  timezone      String    @default("UTC")
-  theme         String    @default("dark")
-  lang          String    @default("en")
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  timezone           String    @default("UTC")
+  theme              String    @default("dark")
+  lang               String    @default("en")
+  accentColor        String    @default("indigo")
+  emailNotifications Boolean   @default(true)
+  notifyTaskAssigned Boolean   @default(true)
+  notifyMentioned    Boolean   @default(true)
+  notifySprintStart  Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   accounts      Account[]
   sessions      Session[]
@@ -29,6 +34,7 @@ model User {
   comments      Comment[]
   activities    Activity[]
   notifications Notification[]
+  timeEntries   TimeEntry[]
 }
 
 model Account {
@@ -85,6 +91,7 @@ model Workspace {
   webhooks      Webhook[]
   activities    Activity[]
   notifications Notification[]
+  templates     TaskTemplate[]
 }
 
 enum Plan {
@@ -146,6 +153,7 @@ model Project {
   columns   Column[]
   sprints   Sprint[]
   favorites ProjectFavorite[]
+  templates TaskTemplate[]
 
   @@unique([key, workspaceId])
 }
@@ -207,6 +215,7 @@ model Task {
   activities   Activity[]
   dependencies TaskDependency[] @relation("dependent")
   blockedBy    TaskDependency[] @relation("blocker")
+  timeEntries  TimeEntry[]
 }
 
 enum TaskStatus {
@@ -352,4 +361,37 @@ model Webhook {
   createdAt   DateTime @default(now())
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+// ─── Time Tracking ────────────────────────────────────
+model TimeEntry {
+  id          String    @id @default(cuid())
+  userId      String
+  taskId      String
+  startTime   DateTime
+  endTime     DateTime?
+  duration    Int?
+  description String?
+  createdAt   DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+// ─── Task Templates ───────────────────────────────────
+model TaskTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  priority    Priority @default(NONE)
+  estimate    Float?
+  checklist   Json?
+  labelIds    String[]
+  workspaceId String
+  projectId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project   Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
 }

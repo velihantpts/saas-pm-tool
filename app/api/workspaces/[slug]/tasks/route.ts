@@ -13,8 +13,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
   const projectKey = searchParams.get('project') || undefined;
   const status = searchParams.get('status') || undefined;
   const priority = searchParams.get('priority') || undefined;
-  const assigneeId = searchParams.get('assignee') || undefined;
+  const assigneeParam = searchParams.get('assignee') || undefined;
+  const assigneeId = assigneeParam === 'me' ? session.user.id : assigneeParam;
   const search = searchParams.get('search') || undefined;
+  const label = searchParams.get('label') || undefined;
+  const dueDateFrom = searchParams.get('dueDateFrom') || undefined;
+  const dueDateTo = searchParams.get('dueDateTo') || undefined;
   const page = parseInt(searchParams.get('page') || '1');
   const limit = parseInt(searchParams.get('limit') || '50');
 
@@ -41,6 +45,17 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
       { title: { contains: search, mode: 'insensitive' } },
       { description: { contains: search, mode: 'insensitive' } },
     ];
+  }
+  if (label) {
+    const labelIds = label.split(',').filter(Boolean);
+    if (labelIds.length > 0) {
+      where.labels = { some: { labelId: { in: labelIds } } };
+    }
+  }
+  if (dueDateFrom || dueDateTo) {
+    where.dueDate = {};
+    if (dueDateFrom) where.dueDate.gte = new Date(dueDateFrom);
+    if (dueDateTo) where.dueDate.lte = new Date(dueDateTo);
   }
 
   const [tasks, total] = await Promise.all([

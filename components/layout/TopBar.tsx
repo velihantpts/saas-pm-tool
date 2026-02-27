@@ -18,7 +18,7 @@ import AIPanel from '@/components/ai/AIPanel';
 export default function TopBar() {
   const router = useRouter();
   const { slug } = useParams();
-  const { theme, toggleTheme } = useTheme();
+  const { resolvedTheme, toggleTheme } = useTheme();
   const { data: session } = useSession();
   const { setOpen: setCmdOpen } = useCommandPalette();
   const { unreadCount } = useNotificationStore();
@@ -57,7 +57,7 @@ export default function TopBar() {
 
           {/* Theme Toggle */}
           <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => toggleTheme(e)}>
-            {theme === 'dark' ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-indigo-400" />}
+            {resolvedTheme === 'dark' ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-indigo-400" />}
           </Button>
 
           {/* Notifications */}

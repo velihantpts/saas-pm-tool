@@ -17,6 +17,11 @@ export async function GET() {
       timezone: true,
       theme: true,
       lang: true,
+      accentColor: true,
+      emailNotifications: true,
+      notifyTaskAssigned: true,
+      notifyMentioned: true,
+      notifySprintStart: true,
       createdAt: true,
     },
   });
@@ -38,6 +43,11 @@ export async function PATCH(req: Request) {
   if (body.timezone !== undefined) data.timezone = body.timezone;
   if (body.theme !== undefined) data.theme = body.theme;
   if (body.lang !== undefined) data.lang = body.lang;
+  if (body.accentColor !== undefined) data.accentColor = body.accentColor;
+  if (body.emailNotifications !== undefined) data.emailNotifications = body.emailNotifications;
+  if (body.notifyTaskAssigned !== undefined) data.notifyTaskAssigned = body.notifyTaskAssigned;
+  if (body.notifyMentioned !== undefined) data.notifyMentioned = body.notifyMentioned;
+  if (body.notifySprintStart !== undefined) data.notifySprintStart = body.notifySprintStart;
 
   const user = await prisma.user.update({
     where: { id: session.user.id },
@@ -50,6 +60,11 @@ export async function PATCH(req: Request) {
       timezone: true,
       theme: true,
       lang: true,
+      accentColor: true,
+      emailNotifications: true,
+      notifyTaskAssigned: true,
+      notifyMentioned: true,
+      notifySprintStart: true,
     },
   });
 

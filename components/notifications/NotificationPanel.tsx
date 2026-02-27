@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Check, CheckCheck, MessageSquare, UserPlus, AlertTriangle, Zap, X } from 'lucide-react';
+import { Bell, Check, CheckCheck, MessageSquare, UserPlus, AlertTriangle, Zap, X, AtSign } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -23,6 +23,7 @@ interface Notification {
 const typeIcons: Record<string, typeof Bell> = {
   task_assigned: Zap,
   comment: MessageSquare,
+  mention: AtSign,
   workspace_invite: UserPlus,
   task_overdue: AlertTriangle,
   default: Bell,
@@ -31,6 +32,7 @@ const typeIcons: Record<string, typeof Bell> = {
 const typeColors: Record<string, string> = {
   task_assigned: '#6366f1',
   comment: '#22d3ee',
+  mention: '#6366f1',
   workspace_invite: '#10b981',
   task_overdue: '#ef4444',
   default: '#6b7280',

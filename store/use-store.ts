@@ -64,3 +64,26 @@ export const useSidebarStore = create<SidebarStore>((set) => ({
   setCollapsed: (collapsed) => set({ collapsed }),
   toggle: () => set((s) => ({ collapsed: !s.collapsed })),
 }));
+
+// ─── Timer Store ──────────────────────────────────────
+interface TimerStore {
+  activeTaskId: string | null;
+  startTime: number | null;
+  description: string;
+  activeEntryId: string | null;
+  start: (taskId: string, entryId: string) => void;
+  stop: () => void;
+  setDescription: (description: string) => void;
+}
+
+export const useTimerStore = create<TimerStore>((set) => ({
+  activeTaskId: null,
+  startTime: null,
+  description: '',
+  activeEntryId: null,
+  start: (taskId, entryId) =>
+    set({ activeTaskId: taskId, startTime: Date.now(), description: '', activeEntryId: entryId }),
+  stop: () =>
+    set({ activeTaskId: null, startTime: null, description: '', activeEntryId: null }),
+  setDescription: (description) => set({ description }),
+}));

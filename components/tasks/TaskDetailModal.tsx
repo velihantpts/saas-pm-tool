@@ -5,12 +5,11 @@ import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Calendar, User, Tag, Flag, Clock, MessageSquare,
-  GitBranch, Activity, Loader2, CheckSquare, Edit3, Trash2,
+  GitBranch, Activity, Loader2, CheckSquare, Edit3, Paperclip, Timer,
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -19,6 +18,11 @@ import { Separator } from '@/components/ui/separator';
 import { useTaskDetail } from '@/store/use-store';
 import { PRIORITY_CONFIG } from '@/lib/constants';
 import { toast } from 'sonner';
+import MarkdownEditor from '@/components/shared/MarkdownEditor';
+import MarkdownRenderer from '@/components/shared/MarkdownRenderer';
+import MentionInput from '@/components/shared/MentionInput';
+import TimeTracker from '@/components/tasks/TimeTracker';
+import AttachmentList from '@/components/tasks/AttachmentList';
 
 interface TaskDetail {
   id: string;
@@ -55,6 +59,8 @@ export default function TaskDetailModal() {
   const [description, setDescription] = useState('');
   const [commentText, setCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [members, setMembers] = useState<{ id: string; name: string | null; image: string | null }[]>([]);
+  const [attachmentCount, setAttachmentCount] = useState(0);
 
   const fetchTask = useCallback(async () => {
     if (!taskId) return;
@@ -65,13 +71,22 @@ export default function TaskDetailModal() {
       setTask(data);
       setTitle(data.title);
       setDescription(data.description || '');
+      setAttachmentCount(data._count.attachments);
     }
     setLoading(false);
   }, [taskId, slug]);
 
+  const fetchMembers = useCallback(async () => {
+    const res = await fetch(`/api/workspaces/${slug}/members`);
+    if (res.ok) {
+      const data = await res.json();
+      setMembers(data.map((m: any) => ({ id: m.user.id, name: m.user.name, image: m.user.image })));
+    }
+  }, [slug]);
+
   useEffect(() => {
-    if (open && taskId) fetchTask();
-  }, [open, taskId, fetchTask]);
+    if (open && taskId) { fetchTask(); fetchMembers(); }
+  }, [open, taskId, fetchTask, fetchMembers]);
 
   const updateField = async (field: string, value: unknown) => {
     if (!task) return;
@@ -151,7 +166,6 @@ export default function TaskDetailModal() {
             <div className="px-6 py-4 space-y-6">
               {/* Properties Grid */}
               <div className="grid grid-cols-2 gap-4 text-sm">
-                {/* Status */}
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground flex items-center gap-1.5"><CheckSquare size={12} />Status</label>
                   <Select value={task.status} onValueChange={(v) => updateField('status', v)}>
@@ -164,7 +178,6 @@ export default function TaskDetailModal() {
                   </Select>
                 </div>
 
-                {/* Priority */}
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground flex items-center gap-1.5"><Flag size={12} />Priority</label>
                   <Select value={task.priority} onValueChange={(v) => updateField('priority', v)}>
@@ -182,7 +195,6 @@ export default function TaskDetailModal() {
                   </Select>
                 </div>
 
-                {/* Assignee */}
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground flex items-center gap-1.5"><User size={12} />Assignee</label>
                   <div className="flex items-center gap-2 h-8">
@@ -200,7 +212,6 @@ export default function TaskDetailModal() {
                   </div>
                 </div>
 
-                {/* Estimate */}
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground flex items-center gap-1.5"><Clock size={12} />Estimate</label>
                   <Input
@@ -214,7 +225,6 @@ export default function TaskDetailModal() {
                   />
                 </div>
 
-                {/* Due Date */}
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground flex items-center gap-1.5"><Calendar size={12} />Due Date</label>
                   <Input
@@ -225,7 +235,6 @@ export default function TaskDetailModal() {
                   />
                 </div>
 
-                {/* Sprint */}
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground flex items-center gap-1.5"><Activity size={12} />Sprint</label>
                   <div className="h-8 flex items-center">
@@ -250,25 +259,26 @@ export default function TaskDetailModal() {
 
               <Separator />
 
-              {/* Tabs: Description, Comments, Subtasks, Activity */}
+              {/* Tabs */}
               <Tabs defaultValue="description" className="w-full">
-                <TabsList className="w-full grid grid-cols-4">
-                  <TabsTrigger value="description" className="text-xs gap-1"><Edit3 size={12} />Description</TabsTrigger>
-                  <TabsTrigger value="comments" className="text-xs gap-1"><MessageSquare size={12} />{task._count.comments}</TabsTrigger>
-                  <TabsTrigger value="subtasks" className="text-xs gap-1"><GitBranch size={12} />{task._count.children}</TabsTrigger>
-                  <TabsTrigger value="activity" className="text-xs gap-1"><Activity size={12} />Log</TabsTrigger>
+                <TabsList className="w-full grid grid-cols-6">
+                  <TabsTrigger value="description" className="text-xs gap-1"><Edit3 size={11} />Desc</TabsTrigger>
+                  <TabsTrigger value="comments" className="text-xs gap-1"><MessageSquare size={11} />{task._count.comments}</TabsTrigger>
+                  <TabsTrigger value="subtasks" className="text-xs gap-1"><GitBranch size={11} />{task._count.children}</TabsTrigger>
+                  <TabsTrigger value="time" className="text-xs gap-1"><Timer size={11} />Time</TabsTrigger>
+                  <TabsTrigger value="attachments" className="text-xs gap-1"><Paperclip size={11} />{attachmentCount}</TabsTrigger>
+                  <TabsTrigger value="activity" className="text-xs gap-1"><Activity size={11} />Log</TabsTrigger>
                 </TabsList>
 
                 {/* Description Tab */}
                 <TabsContent value="description" className="mt-4">
                   {editingDesc ? (
                     <div className="space-y-2">
-                      <Textarea
+                      <MarkdownEditor
                         value={description}
-                        onChange={(e) => setDescription(e.target.value)}
+                        onChange={setDescription}
                         rows={8}
                         placeholder="Add a description... (Markdown supported)"
-                        className="text-sm"
                       />
                       <div className="flex gap-2">
                         <Button size="sm" onClick={() => { updateField('description', description); setEditingDesc(false); }}>Save</Button>
@@ -277,10 +287,14 @@ export default function TaskDetailModal() {
                     </div>
                   ) : (
                     <div
-                      className="text-sm text-muted-foreground whitespace-pre-wrap cursor-pointer hover:bg-muted/30 rounded-lg p-3 min-h-[100px] transition-colors"
+                      className="cursor-pointer hover:bg-muted/30 rounded-lg p-3 min-h-[100px] transition-colors"
                       onClick={() => setEditingDesc(true)}
                     >
-                      {task.description || 'Click to add a description...'}
+                      {task.description ? (
+                        <MarkdownRenderer content={task.description} />
+                      ) : (
+                        <p className="text-sm text-muted-foreground">Click to add a description...</p>
+                      )}
                     </div>
                   )}
                 </TabsContent>
@@ -307,7 +321,9 @@ export default function TaskDetailModal() {
                                 {new Date(comment.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                               </span>
                             </div>
-                            <p className="text-sm text-muted-foreground mt-0.5 whitespace-pre-wrap">{comment.content}</p>
+                            <div className="mt-0.5">
+                              <MarkdownRenderer content={comment.content} className="text-sm" />
+                            </div>
                           </div>
                         </motion.div>
                       ))}
@@ -317,17 +333,14 @@ export default function TaskDetailModal() {
                     )}
                   </div>
 
-                  {/* Add comment */}
-                  <div className="flex gap-2">
-                    <Textarea
-                      value={commentText}
-                      onChange={(e) => setCommentText(e.target.value)}
-                      placeholder="Write a comment..."
-                      rows={2}
-                      className="text-sm flex-1"
-                      onKeyDown={(e) => { if (e.key === 'Enter' && e.metaKey) handleAddComment(); }}
-                    />
-                  </div>
+                  <MentionInput
+                    value={commentText}
+                    onChange={setCommentText}
+                    members={members}
+                    placeholder="Write a comment... Use @ to mention"
+                    rows={2}
+                    onSubmit={handleAddComment}
+                  />
                   <Button size="sm" onClick={handleAddComment} disabled={!commentText.trim() || submittingComment} className="gap-1.5">
                     {submittingComment && <Loader2 size={12} className="animate-spin" />}
                     Comment
@@ -353,6 +366,21 @@ export default function TaskDetailModal() {
                   {task.children.length === 0 && (
                     <p className="text-xs text-muted-foreground text-center py-6">No subtasks</p>
                   )}
+                </TabsContent>
+
+                {/* Time Tracking Tab */}
+                <TabsContent value="time" className="mt-4">
+                  <TimeTracker taskId={task.id} slug={slug as string} />
+                </TabsContent>
+
+                {/* Attachments Tab */}
+                <TabsContent value="attachments" className="mt-4">
+                  <AttachmentList
+                    taskId={task.id}
+                    slug={slug as string}
+                    attachmentCount={attachmentCount}
+                    onCountChange={setAttachmentCount}
+                  />
                 </TabsContent>
 
                 {/* Activity Tab */}

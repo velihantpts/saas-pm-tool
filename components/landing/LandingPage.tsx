@@ -7,7 +7,8 @@ import {
   Layers, ArrowRight, CheckSquare, FolderKanban, BarChart3,
   Users, Zap, Sparkles, Shield, Globe, Keyboard, Bell,
   MessageSquare, Activity, Moon, Sun, GitBranch, Search,
-  LogIn, Copy, Check,
+  LogIn, Copy, Check, CalendarDays, Timer, Palette, GanttChart,
+  Paperclip, AtSign, Mail,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -67,6 +68,48 @@ const features = [
     title: 'Multi-Tenant',
     desc: 'Workspace-based data isolation with slug routing and RBAC permissions.',
     color: '#8b5cf6',
+  },
+  {
+    icon: GanttChart,
+    title: 'Gantt & Calendar',
+    desc: 'Multiple views: Kanban, List, Gantt Chart, and Calendar for every project.',
+    color: '#0ea5e9',
+  },
+  {
+    icon: Timer,
+    title: 'Time Tracking',
+    desc: 'Built-in timer and manual time logging with per-task and team analytics.',
+    color: '#14b8a6',
+  },
+  {
+    icon: Palette,
+    title: 'Accent Themes',
+    desc: '6 accent colors, dark/light/system modes for a personalized experience.',
+    color: '#e879f9',
+  },
+  {
+    icon: Paperclip,
+    title: 'File Attachments',
+    desc: 'Drag-and-drop file uploads on tasks with image previews and downloads.',
+    color: '#64748b',
+  },
+  {
+    icon: AtSign,
+    title: '@Mentions',
+    desc: 'Mention teammates in comments with autocomplete and instant notifications.',
+    color: '#6366f1',
+  },
+  {
+    icon: Mail,
+    title: 'Email Notifications',
+    desc: 'Get notified via email for task assignments, mentions, and sprint starts.',
+    color: '#f43f5e',
+  },
+  {
+    icon: CalendarDays,
+    title: 'Dashboard Widgets',
+    desc: 'Customizable dashboard with KPI cards, charts, sprint progress, and more.',
+    color: '#84cc16',
   },
 ];
 

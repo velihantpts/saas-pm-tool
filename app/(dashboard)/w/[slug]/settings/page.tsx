@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  Settings, User, Bell, Palette, Shield, Globe, Loader2, Save,
-  Trash2, Image as ImageIcon,
+  Settings, User, Bell, Palette, Loader2, Save,
+  Trash2, Monitor, Moon, Sun, Check,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,10 +18,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { useTheme } from '@/providers/ThemeProvider';
+import { ACCENT_COLORS, type AccentColor } from '@/lib/constants';
 
 export default function SettingsPage() {
   const { slug } = useParams();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, accentColor, setThemeMode, setAccentColor } = useTheme();
 
   // Workspace settings
   const [workspace, setWorkspace] = useState<{
@@ -34,14 +35,15 @@ export default function SettingsPage() {
   // Profile settings
   const [profile, setProfile] = useState<{
     id: string; name: string | null; email: string; image: string | null;
-    timezone: string; theme: string; lang: string;
+    timezone: string; theme: string; lang: string; accentColor: string;
+    emailNotifications: boolean; notifyTaskAssigned: boolean;
+    notifyMentioned: boolean; notifySprintStart: boolean;
   } | null>(null);
   const [profileName, setProfileName] = useState('');
   const [timezone, setTimezone] = useState('UTC');
 
   // Notification prefs
   const [emailNotifs, setEmailNotifs] = useState(true);
-  const [pushNotifs, setPushNotifs] = useState(true);
   const [taskAssigned, setTaskAssigned] = useState(true);
   const [taskCommented, setTaskCommented] = useState(true);
   const [sprintStarted, setSprintStarted] = useState(true);
@@ -62,6 +64,10 @@ export default function SettingsPage() {
       setProfile(data);
       setProfileName(data.name || '');
       setTimezone(data.timezone);
+      setEmailNotifs(data.emailNotifications ?? true);
+      setTaskAssigned(data.notifyTaskAssigned ?? true);
+      setTaskCommented(data.notifyMentioned ?? true);
+      setSprintStarted(data.notifySprintStart ?? true);
     }
   }, []);
 
@@ -90,6 +96,31 @@ export default function SettingsPage() {
       toast.success('Profile updated');
       fetchProfile();
     }
+  };
+
+  const saveNotificationPrefs = async () => {
+    setSaving(true);
+    const res = await fetch('/api/user/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        emailNotifications: emailNotifs,
+        notifyTaskAssigned: taskAssigned,
+        notifyMentioned: taskCommented,
+        notifySprintStart: sprintStarted,
+      }),
+    });
+    setSaving(false);
+    if (res.ok) toast.success('Preferences saved');
+  };
+
+  const handleAccentChange = (color: AccentColor) => {
+    setAccentColor(color);
+    fetch('/api/user/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accentColor: color }),
+    });
   };
 
   const initials = profile?.name?.split(' ').map((n) => n[0]).join('').toUpperCase() || '?';
@@ -213,31 +244,65 @@ export default function SettingsPage() {
               <CardTitle className="text-sm">Theme</CardTitle>
               <CardDescription className="text-xs">Customize the look and feel</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-3 gap-3">
                 <div
                   className={`p-4 rounded-lg border-2 cursor-pointer transition-colors ${theme === 'dark' ? 'border-primary bg-primary/5' : 'border-border'}`}
-                  onClick={(e) => theme !== 'dark' && toggleTheme(e as unknown as React.MouseEvent)}
+                  onClick={() => setThemeMode('dark')}
                 >
-                  <div className="w-full h-20 rounded bg-[#0a0a0f] mb-2 flex items-end p-2 gap-1">
-                    <div className="w-3 h-6 rounded bg-indigo-500/30" />
-                    <div className="w-3 h-4 rounded bg-indigo-500/20" />
-                    <div className="w-3 h-8 rounded bg-indigo-500/40" />
+                  <div className="w-full h-16 rounded bg-[#0a0a0f] mb-2 flex items-center justify-center">
+                    <Moon size={20} className="text-indigo-400" />
                   </div>
                   <p className="text-xs font-medium">Dark</p>
                   <p className="text-[10px] text-muted-foreground">Easy on the eyes</p>
                 </div>
                 <div
                   className={`p-4 rounded-lg border-2 cursor-pointer transition-colors ${theme === 'light' ? 'border-primary bg-primary/5' : 'border-border'}`}
-                  onClick={(e) => theme !== 'light' && toggleTheme(e as unknown as React.MouseEvent)}
+                  onClick={() => setThemeMode('light')}
                 >
-                  <div className="w-full h-20 rounded bg-gray-100 mb-2 flex items-end p-2 gap-1">
-                    <div className="w-3 h-6 rounded bg-indigo-500/30" />
-                    <div className="w-3 h-4 rounded bg-indigo-500/20" />
-                    <div className="w-3 h-8 rounded bg-indigo-500/40" />
+                  <div className="w-full h-16 rounded bg-gray-100 mb-2 flex items-center justify-center">
+                    <Sun size={20} className="text-amber-500" />
                   </div>
                   <p className="text-xs font-medium">Light</p>
                   <p className="text-[10px] text-muted-foreground">Classic and clean</p>
+                </div>
+                <div
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-colors ${theme === 'system' ? 'border-primary bg-primary/5' : 'border-border'}`}
+                  onClick={() => setThemeMode('system')}
+                >
+                  <div className="w-full h-16 rounded bg-gradient-to-r from-[#0a0a0f] to-gray-100 mb-2 flex items-center justify-center">
+                    <Monitor size={20} className="text-gray-400" />
+                  </div>
+                  <p className="text-xs font-medium">System</p>
+                  <p className="text-[10px] text-muted-foreground">Follow OS setting</p>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <Label className="text-xs font-semibold">Accent Color</Label>
+                <p className="text-[10px] text-muted-foreground mb-3">Choose the primary color for the interface</p>
+                <div className="flex gap-3">
+                  {(Object.entries(ACCENT_COLORS) as [AccentColor, typeof ACCENT_COLORS[AccentColor]][]).map(([key, config]) => (
+                    <button
+                      key={key}
+                      onClick={() => handleAccentChange(key)}
+                      className="group flex flex-col items-center gap-1.5"
+                    >
+                      <div
+                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all border-2 ${
+                          accentColor === key ? 'border-foreground scale-110' : 'border-transparent hover:scale-105'
+                        }`}
+                        style={{ backgroundColor: config.preview }}
+                      >
+                        {accentColor === key && <Check size={16} className="text-white" />}
+                      </div>
+                      <span className={`text-[10px] ${accentColor === key ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+                        {config.label}
+                      </span>
+                    </button>
+                  ))}
                 </div>
               </div>
             </CardContent>
@@ -260,14 +325,6 @@ export default function SettingsPage() {
                 <Switch checked={emailNotifs} onCheckedChange={setEmailNotifs} />
               </div>
               <Separator />
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">Push Notifications</p>
-                  <p className="text-xs text-muted-foreground">Browser push notifications</p>
-                </div>
-                <Switch checked={pushNotifs} onCheckedChange={setPushNotifs} />
-              </div>
-              <Separator />
               <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Events</h4>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -275,7 +332,7 @@ export default function SettingsPage() {
                   <Switch checked={taskAssigned} onCheckedChange={setTaskAssigned} />
                 </div>
                 <div className="flex items-center justify-between">
-                  <p className="text-sm">New comment on my task</p>
+                  <p className="text-sm">Mentioned in a comment</p>
                   <Switch checked={taskCommented} onCheckedChange={setTaskCommented} />
                 </div>
                 <div className="flex items-center justify-between">
@@ -283,8 +340,9 @@ export default function SettingsPage() {
                   <Switch checked={sprintStarted} onCheckedChange={setSprintStarted} />
                 </div>
               </div>
-              <Button size="sm" className="gap-1.5" onClick={() => toast.success('Preferences saved')}>
-                <Save size={12} /> Save Preferences
+              <Button size="sm" className="gap-1.5" onClick={saveNotificationPrefs} disabled={saving}>
+                {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                Save Preferences
               </Button>
             </CardContent>
           </Card>

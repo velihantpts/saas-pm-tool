@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { sendTaskAssignedEmail } from '@/lib/email';
 
 // GET — task detail
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string; id: string }> }) {
@@ -87,6 +88,51 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ slug: 
         taskId: task.id,
       },
     });
+
+    // Notify assignee when assigneeId changes
+    if (assigneeId !== undefined && assigneeId && assigneeId !== session.user.id) {
+      const assignee = await prisma.user.findUnique({
+        where: { id: assigneeId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          emailNotifications: true,
+          notifyTaskAssigned: true,
+        },
+      });
+
+      if (assignee) {
+        const taskUrl = `/w/${slug}/tasks/${task.id}`;
+        const currentUser = await prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: { name: true },
+        });
+        const assignerName = currentUser?.name || 'Someone';
+
+        if (assignee.notifyTaskAssigned) {
+          await prisma.notification.create({
+            data: {
+              type: 'assignment',
+              title: `You were assigned to ${task.title}`,
+              message: `${assignerName} assigned you to this task.`,
+              link: taskUrl,
+              userId: assignee.id,
+              workspaceId: workspace.id,
+            },
+          });
+        }
+
+        if (assignee.emailNotifications && assignee.notifyTaskAssigned && assignee.email) {
+          await sendTaskAssignedEmail(
+            assignee.email,
+            task.title,
+            assignerName,
+            `${process.env.NEXT_PUBLIC_APP_URL || ''}${taskUrl}`
+          );
+        }
+      }
+    }
   }
 
   return NextResponse.json({ ...task, taskId: `${task.project.key}-${task.number}` });
