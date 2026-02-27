@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -19,19 +19,21 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/';
+  const isDemo = searchParams.get('demo') === 'true';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [demoTyping, setDemoTyping] = useState(false);
+  const demoRan = useRef(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const doLogin = async (loginEmail: string, loginPassword: string) => {
     setError('');
     setLoading(true);
 
     const res = await signIn('credentials', {
-      email,
-      password,
+      email: loginEmail,
+      password: loginPassword,
       redirect: false,
     });
 
@@ -43,6 +45,52 @@ function LoginForm() {
       router.push(callbackUrl);
       router.refresh();
     }
+  };
+
+  // Demo auto-login: type credentials then submit
+  useEffect(() => {
+    if (!isDemo || demoRan.current) return;
+    demoRan.current = true;
+
+    const demoEmail = 'admin@nexusflow.dev';
+    const demoPass = 'password123';
+
+    setDemoTyping(true);
+
+    let emailIdx = 0;
+    const emailInterval = setInterval(() => {
+      emailIdx++;
+      setEmail(demoEmail.slice(0, emailIdx));
+      if (emailIdx >= demoEmail.length) {
+        clearInterval(emailInterval);
+
+        // Small pause then type password
+        setTimeout(() => {
+          let passIdx = 0;
+          const passInterval = setInterval(() => {
+            passIdx++;
+            setPassword(demoPass.slice(0, passIdx));
+            if (passIdx >= demoPass.length) {
+              clearInterval(passInterval);
+              setDemoTyping(false);
+
+              // Small pause then auto-submit
+              setTimeout(() => {
+                doLogin(demoEmail, demoPass);
+              }, 300);
+            }
+          }, 40);
+        }, 200);
+      }
+    }, 35);
+
+    return () => clearInterval(emailInterval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDemo]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    doLogin(email, password);
   };
 
   return (

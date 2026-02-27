@@ -131,7 +131,7 @@ export default function LandingPage() {
               </button>
             </div>
           </div>
-          <Link href="/login">
+          <Link href="/login?demo=true">
             <Button size="sm" variant="outline" className="text-[10px] h-7 gap-1.5 border-primary/30 hover:bg-primary/10">
               <LogIn size={11} />
               Try Demo Now
@@ -219,7 +219,7 @@ export default function LandingPage() {
                 Start Free <ArrowRight size={15} />
               </Button>
             </Link>
-            <Link href="/login">
+            <Link href="/login?demo=true">
               <Button variant="outline" size="lg" className="gap-2 px-8 text-sm">
                 View Demo
               </Button>
@@ -415,9 +415,9 @@ export default function LandingPage() {
                   Create Free Account <ArrowRight size={15} />
                 </Button>
               </Link>
-              <Link href="/login">
+              <Link href="/login?demo=true">
                 <Button variant="outline" size="lg" className="gap-2 px-8">
-                  Sign In to Demo
+                  Try Demo
                 </Button>
               </Link>
             </div>
