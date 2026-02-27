@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PRIORITY_CONFIG } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { useTaskDetail } from '@/store/use-store';
-import type { BoardTask } from '@/app/(dashboard)/w/[slug]/projects/[key]/board/page';
+import type { BoardTask } from '@/lib/types';
 
 interface KanbanCardProps {
   task: BoardTask;

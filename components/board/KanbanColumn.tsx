@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { cn } from '@/lib/utils';
-import type { BoardColumn } from '@/app/(dashboard)/w/[slug]/projects/[key]/board/page';
+import type { BoardColumn } from '@/lib/types';
 
 interface KanbanColumnProps {
   column: BoardColumn;
